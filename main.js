@@ -117,29 +117,33 @@ var app = http.createServer(function (request, response) {
         }); */
 
         db.query("SELECT * FROM topic", function (error, topics) {
-            console.log(topics);
+            db.query("SELECT * FROM author", function (error, authors) {
+                
+                var title = "Create";
+                var list = template.list(topics);
+                var html = template.html(
+                    title,
+                    list,
+                    `
+                    <form action="/create_process" method="post">
+                        <p><input type="text" name="title" placeholder="title"></p>
+                        <p>
+                            <textarea name="description" placeholder="description"></textarea>
+                        </p>
+                        <p>
+                            ${template.authorSelect(authors)}
+                        </p>
+                        <p>
+                            <input type="submit">
+                        </p>
+                    </form>
+                `,
+                    `<a href="/create">create</a>`
+                );
 
-            var title = "Create";
-            var list = template.list(topics);
-            var html = template.html(
-                title,
-                list,
-                `
-            <form action="/create_process" method="post">
-                <p><input type="text" name="title" placeholder="title"></p>
-                <p>
-                    <textarea name="description" placeholder="description"></textarea>
-                </p>
-                <p>
-                    <input type="submit">
-                </p>
-            </form>
-            `,
-                `<a href="/create">create</a>`
-            );
-
-            response.writeHead(200);
-            response.end(html);
+                response.writeHead(200);
+                response.end(html);
+            });
         });
     } else if (pathname === "/create_process") {
         var body = "";
@@ -156,7 +160,7 @@ var app = http.createServer(function (request, response) {
                 response.end();
             }); */
 
-            db.query(`INSERT INTO topic (title, description, created, author_id) VALUES (?, ?, NOW(), ?)`, [title, description, 1], function (error, result) {
+            db.query(`INSERT INTO topic (title, description, created, author_id) VALUES (?, ?, NOW(), ?)`, [title, description, post.author], function (error, result) {
                 if (error) {
                     throw error;
                 }
