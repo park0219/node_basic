@@ -239,9 +239,9 @@ var app = http.createServer(function (request, response) {
                 });
             }); */
 
-            db.query('UPDATE topic SET title=?, description=?, author_id=1 WHERE id=?', [title, description, id], function(error, result) {
+            db.query("UPDATE topic SET title=?, description=?, author_id=1 WHERE id=?", [title, description, id], function (error, result) {
                 response.writeHead(302, { Location: `/?id=${id}` });
-                    response.end();
+                response.end();
             });
         });
     } else if (pathname === "/delete_process") {
@@ -254,7 +254,15 @@ var app = http.createServer(function (request, response) {
             var id = post.id;
 
             var filteredID = path.parse(id).base;
-            fs.unlink(`data/${filteredID}`, function (err) {
+            /* fs.unlink(`data/${filteredID}`, function (err) {
+                response.writeHead(302, { Location: `/` });
+                response.end();
+            }); */
+
+            db.query("DELETE FROM topic WHERE id=?", [id], function (error, result) {
+                if (error) {
+                    throw error;
+                }
                 response.writeHead(302, { Location: `/` });
                 response.end();
             });
