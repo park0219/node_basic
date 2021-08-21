@@ -92,7 +92,7 @@ var app = http.createServer(function (request, response) {
             });
         }
     } else if (pathname === "/create") {
-        fs.readdir("./data", function (error, filelist) {
+        /* fs.readdir("./data", function (error, filelist) {
             var title = "Web - create";
             var list = template.list(filelist);
             var html = template.html(
@@ -113,6 +113,32 @@ var app = http.createServer(function (request, response) {
             );
             response.writeHead(200);
             response.end(html);
+        }); */
+
+        db.query("SELECT * FROM topic", function (error, topics) {
+            console.log(topics);
+
+            var title = "Create";
+            var list = template.list(topics);
+            var html = template.html(
+                title,
+                list,
+                `
+            <form action="/create_process" method="post">
+                <p><input type="text" name="title" placeholder="title"></p>
+                <p>
+                    <textarea name="description" placeholder="description"></textarea>
+                </p>
+                <p>
+                    <input type="submit">
+                </p>
+            </form>
+            `,
+                `<a href="/create">create</a>`
+            );
+
+            response.writeHead(200);
+            response.end(html);
         });
     } else if (pathname === "/create_process") {
         var body = "";
@@ -124,8 +150,16 @@ var app = http.createServer(function (request, response) {
             var title = post.title;
             var description = post.description;
 
-            fs.writeFile(`data/${title}`, description, "utf-8", function (err) {
+            /* fs.writeFile(`data/${title}`, description, "utf-8", function (err) {
                 response.writeHead(302, { Location: `/?id=${title}` });
+                response.end();
+            }); */
+
+            db.query(`INSERT INTO topic (title, description, created, author_id) VALUES (?, ?, NOW(), ?)`, [title, description, 1], function (error, result) {
+                if (error) {
+                    throw error;
+                }
+                response.writeHead(302, { Location: `/?id=${result.insertId}` });
                 response.end();
             });
         });
