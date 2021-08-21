@@ -118,7 +118,6 @@ var app = http.createServer(function (request, response) {
 
         db.query("SELECT * FROM topic", function (error, topics) {
             db.query("SELECT * FROM author", function (error, authors) {
-                
                 var title = "Create";
                 var list = template.list(topics);
                 var html = template.html(
@@ -203,11 +202,15 @@ var app = http.createServer(function (request, response) {
                 if (error2) {
                     throw error2;
                 }
-                var list = template.list(topics);
-                var html = template.html(
-                    topics[0].title,
-                    list,
-                    `
+                db.query("SELECT * FROM author", function (error3, authors) {
+                    if(error3) {
+                        throw error3;
+                    }
+                    var list = template.list(topics);
+                    var html = template.html(
+                        topics[0].title,
+                        list,
+                        `
                     <form action="/update_process" method="post">
                         <input type="hidden" name="id" value="${topic[0].id}">
                         <p><input type="text" name="title" placeholder="title" value="${topic[0].title}"></p>
@@ -215,15 +218,19 @@ var app = http.createServer(function (request, response) {
                             <textarea name="description" placeholder="description">${topic[0].description}</textarea>
                         </p>
                         <p>
+                            ${template.authorSelect(authors, topic[0].author_id)}
+                        </p>
+                        <p>
                             <input type="submit">
                         </p>
                     </form>
                     `,
-                    `<a href="/create">create</a> <a href="/update?id=${topic[0].title}">update</a>`
-                );
+                        `<a href="/create">create</a> <a href="/update?id=${topic[0].title}">update</a>`
+                    );
 
-                response.writeHead(200);
-                response.end(html);
+                    response.writeHead(200);
+                    response.end(html);
+                });
             });
         });
     } else if (pathname === "/update_process") {
@@ -244,7 +251,7 @@ var app = http.createServer(function (request, response) {
                 });
             }); */
 
-            db.query("UPDATE topic SET title=?, description=?, author_id=1 WHERE id=?", [title, description, id], function (error, result) {
+            db.query("UPDATE topic SET title=?, description=?, author_id=? WHERE id=?", [title, description, post.author, id], function (error, result) {
                 response.writeHead(302, { Location: `/?id=${id}` });
                 response.end();
             });
