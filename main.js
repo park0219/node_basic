@@ -164,7 +164,7 @@ var app = http.createServer(function (request, response) {
             });
         });
     } else if (pathname === "/update") {
-        fs.readdir("./data", function (error, filelist) {
+        /* fs.readdir("./data", function (error, filelist) {
             var filteredID = path.parse(queryData.id).base;
             fs.readFile(`data/${filteredID}`, "utf8", function (err, description) {
                 var title = queryData.id;
@@ -189,6 +189,37 @@ var app = http.createServer(function (request, response) {
                 response.writeHead(200);
                 response.end(html);
             });
+        }); */
+        db.query("SELECT * FROM topic", function (error, topics) {
+            if (error) {
+                throw error;
+            }
+            db.query(`SELECT * FROM topic where id=?`, [queryData.id], function (error2, topic) {
+                if (error2) {
+                    throw error2;
+                }
+                var list = template.list(topics);
+                var html = template.html(
+                    topics[0].title,
+                    list,
+                    `
+                    <form action="/update_process" method="post">
+                        <input type="hidden" name="id" value="${topic[0].id}">
+                        <p><input type="text" name="title" placeholder="title" value="${topic[0].title}"></p>
+                        <p>
+                            <textarea name="description" placeholder="description">${topic[0].description}</textarea>
+                        </p>
+                        <p>
+                            <input type="submit">
+                        </p>
+                    </form>
+                    `,
+                    `<a href="/create">create</a> <a href="/update?id=${topic[0].title}">update</a>`
+                );
+
+                response.writeHead(200);
+                response.end(html);
+            });
         });
     } else if (pathname === "/update_process") {
         var body = "";
@@ -201,11 +232,16 @@ var app = http.createServer(function (request, response) {
             var title = post.title;
             var description = post.description;
 
-            fs.rename(`data/${id}`, `data/${title}`, function (error) {
+            /* fs.rename(`data/${id}`, `data/${title}`, function (error) {
                 fs.writeFile(`data/${title}`, description, "utf-8", function (err) {
                     response.writeHead(302, { Location: `/?id=${title}` });
                     response.end();
                 });
+            }); */
+
+            db.query('UPDATE topic SET title=?, description=?, author_id=1 WHERE id=?', [title, description, id], function(error, result) {
+                response.writeHead(302, { Location: `/?id=${id}` });
+                    response.end();
             });
         });
     } else if (pathname === "/delete_process") {
